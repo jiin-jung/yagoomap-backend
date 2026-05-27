@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>야구맵 관리자</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="admin-body">
+<main class="admin-shell">
+    <aside class="admin-sidebar" aria-label="관리자 메뉴">
+        <a class="logo admin-logo" href="/admin.html" aria-label="관리자 홈">
+            <span class="ball-mark">T</span>
+            <span>관리자</span>
+            <small>YAGOOMAP</small>
+        </a>
+        <nav class="admin-nav">
+            <a href="#dashboard">대시보드</a>
+            <a href="#reports">제보 검수</a>
+            <a href="#crawl">크롤링 후보</a>
+            <a href="/">지도 화면</a>
+            <a href="/swagger-ui.html">Swagger</a>
+        </nav>
+    </aside>
+
+    <section class="admin-main">
+        <header class="admin-header">
+            <div>
+                <p id="adminPageKicker">Admin Console</p>
+                <h1 id="adminPageTitle">야구틀어주는술집 운영 관리</h1>
+            </div>
+            <button class="admin-primary" id="refreshButton" type="button">새로고침</button>
+        </header>
+
+        <section class="admin-section admin-page" id="dashboard" data-page-title="운영 현황" data-page-kicker="Dashboard" aria-label="대시보드">
+            <div class="admin-stat-grid" id="dashboardStats"></div>
+            <div class="two-column admin-dashboard-places" aria-label="장소 관리">
+                <div class="admin-panel">
+                    <div class="admin-panel-head">
+                        <h2 id="placeFormTitle">장소 등록</h2>
+                        <span id="placeFormMode">신규 응원 장소</span>
+                    </div>
+                    <form class="admin-form" id="placeForm">
+                        <label>상호명<input name="name" required placeholder="잠실 야구포차"></label>
+                        <label>주소<input name="address" required placeholder="서울 송파구 올림픽로 25"></label>
+                        <div class="admin-form-grid">
+                            <label>위도<input name="latitude" type="number" step="0.000001" value="37.5122"></label>
+                            <label>경도<input name="longitude" type="number" step="0.000001" value="127.0719"></label>
+                        </div>
+                        <div class="admin-form-grid">
+                            <label>구단 ID<input name="teamId" type="number" value="1"></label>
+                            <label>구단명<input name="team" value="LG 트윈스"></label>
+                        </div>
+                        <div class="admin-form-grid">
+                            <label>분류<input name="category" value="술집"></label>
+                            <label>전화<input name="phone" placeholder="02-0000-0000"></label>
+                        </div>
+                        <label>네이버 지도 URL<input name="naverMapUrl" value="https://map.naver.com/"></label>
+                        <label>메모<textarea name="note" rows="3" placeholder="경기 중계와 단체 응원에 적합한 장소"></textarea></label>
+                        <label>태그<input name="tags" placeholder="대형 TV, 단체석, 예약 추천"></label>
+                        <div class="admin-form-actions">
+                            <button class="admin-primary" id="placeSubmitButton" type="submit">등록</button>
+                            <button class="admin-secondary" id="placeCancelButton" type="button" hidden>취소</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="admin-panel">
+                    <div class="admin-panel-head">
+                        <h2>장소 목록</h2>
+                        <span id="placeSummary">0개</span>
+                    </div>
+                    <div class="admin-table-wrap">
+                        <table class="admin-table">
+                            <thead>
+                            <tr>
+                                <th>장소</th>
+                                <th>지역</th>
+                                <th>상태</th>
+                                <th>평점 / 리뷰 수</th>
+                                <th>관리</th>
+                            </tr>
+                            </thead>
+                            <tbody id="placesTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="admin-section admin-page" id="reports" data-page-title="제보 검수" data-page-kicker="Reports" aria-label="제보 검수">
+            <div class="admin-panel">
+                <div class="admin-panel-head">
+                    <h2>제보 검수</h2>
+                    <select id="reportStatusFilter" aria-label="제보 상태">
+                        <option value="">전체</option>
+                        <option value="PENDING">대기</option>
+                        <option value="APPROVED">승인</option>
+                        <option value="REJECTED">반려</option>
+                    </select>
+                </div>
+                <div class="admin-list" id="reportsList"></div>
+            </div>
+        </section>
+
+        <section class="admin-section admin-page two-column" id="crawl" data-page-title="크롤링 후보" data-page-kicker="Crawl Candidates" aria-label="크롤링 후보">
+            <div class="admin-panel">
+                <div class="admin-panel-head">
+                    <h2>후보 추가</h2>
+                    <span>검색 수집 결과</span>
+                </div>
+                <form class="admin-form" id="crawlForm">
+                    <label>키워드<input name="keyword" required placeholder="야구 중계 술집 잠실"></label>
+                    <label>장소명<input name="name" required placeholder="잠실 응원펍 후보"></label>
+                    <label>주소<input name="address" required placeholder="서울 송파구 ..."></label>
+                    <label>전화<input name="phone" placeholder="02-0000-0000"></label>
+                    <label>지도 링크<input name="mapLink" value="https://map.naver.com/"></label>
+                    <button class="admin-primary" type="submit">후보 등록</button>
+                </form>
+            </div>
+
+            <div class="admin-panel">
+                <div class="admin-panel-head">
+                    <h2>후보 목록</h2>
+                    <select id="crawlStatusFilter" aria-label="후보 상태">
+                        <option value="">전체</option>
+                        <option value="PENDING">대기</option>
+                    </select>
+                </div>
+                <div class="admin-list compact" id="crawlList"></div>
+            </div>
+        </section>
+    </section>
+</main>
+
+<div class="admin-toast" id="toast" role="status" aria-live="polite"></div>
+<script src="/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: yagoomap
+  config:
+    import: optional:file:.env[.properties]
+  profiles:
+    default: local
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+server:
+  port: 8080

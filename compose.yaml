@@ -1,0 +1,12 @@
+name: yagoomap
+
+services:
+  mysql:
+    image: 'mysql:latest'
+    environment:
+      - 'MYSQL_DATABASE=yagoomap'
+      - 'MYSQL_PASSWORD=secret'
+      - 'MYSQL_ROOT_PASSWORD=verysecret'
+      - 'MYSQL_USER=yagoomap'
+    ports:
+      - '3307:3306'

@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>야구틀어주는술집</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<main class="app-shell">
+    <section class="top-panel" aria-label="야구맵 검색">
+        <nav class="app-bar">
+            <a class="logo" href="/" aria-label="야구틀어주는술집 홈">
+                <span class="ball-mark">T</span>
+                <span>야구틀어주는술집</span>
+                <small>LG TWINS MAP</small>
+            </a>
+            <a class="icon-button" href="/admin.html" aria-label="관리자">A</a>
+        </nav>
+
+        <div class="hero-row">
+            <div>
+                <h1><span>LG</span> 야구 틀어주는 술집 찾기</h1>
+                <p>오늘도 LG 트윈스 응원은 여기서!</p>
+            </div>
+            <select id="cityFilter" aria-label="도시">
+                <option>서울특별시</option>
+            </select>
+        </div>
+
+        <form class="search-row" id="filters">
+            <label class="search-box">
+                <span aria-hidden="true">⌕</span>
+                <input id="keywordFilter" name="keyword" type="search" placeholder="지역, 가게명 검색">
+            </label>
+            <button class="filter-button" type="button">
+                <span aria-hidden="true">≡</span>
+                필터
+            </button>
+            <select id="teamFilter" name="team" aria-label="구단"></select>
+            <select id="districtFilter" name="district" aria-label="지역"></select>
+        </form>
+
+        <div class="chip-row" id="districtChips" aria-label="지역 빠른 필터"></div>
+    </section>
+
+    <section class="content-area">
+        <aside class="place-list-panel" aria-label="장소 목록">
+            <div class="list-heading">
+                <strong id="placeCount">0</strong>
+                <span>검증 후보</span>
+            </div>
+            <div class="place-list" id="placeList" aria-live="polite"></div>
+        </aside>
+
+        <section class="map-area" aria-label="야구맵 지도">
+            <div class="map-canvas" id="map">
+                <div class="map-label label-river">한강</div>
+                <div class="map-label label-gangnam">강남구</div>
+                <div class="map-label label-songpa">송파구</div>
+                <div class="map-label label-jamsil">잠실종합운동장</div>
+                <button class="refresh-button" type="button">↻ 이 지역 재검색</button>
+                <div id="markerLayer"></div>
+            </div>
+
+            <div class="map-controls">
+                <button type="button" aria-label="현재 위치">◎</button>
+                <button type="button" aria-label="확대">+</button>
+                <button type="button" aria-label="축소">−</button>
+            </div>
+
+            <aside class="detail" id="placeDetail" aria-live="polite">
+                <p class="empty">지도나 목록에서 장소를 선택하세요.</p>
+            </aside>
+        </section>
+    </section>
+
+    <nav class="bottom-nav" aria-label="하단 내비게이션">
+        <a class="active" href="#">지도</a>
+        <a href="#">즐겨찾기</a>
+        <button type="button">응원하기</button>
+        <a href="#">커뮤니티</a>
+        <a href="#">마이페이지</a>
+    </nav>
+</main>
+
+<script src="/app.js"></script>
+</body>
+</html>
