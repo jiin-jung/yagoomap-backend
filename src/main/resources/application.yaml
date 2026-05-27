@@ -5,6 +5,9 @@ spring:
     import: optional:file:.env[.properties]
   profiles:
     default: local
+  data:
+    redis:
+      url: ${REDIS_URL:redis://localhost:6379}  # 로컬: redis://, Upstash: rediss://
   jpa:
     hibernate:
       ddl-auto: update

@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>이미지 캐시 테스트</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f5f7;
+      min-height: 100vh;
+      padding: 32px 24px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 22px;
+      font-weight: 800;
+      color: #111;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      text-align: center;
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 28px;
+    }
+
+    /* 검색 */
+    .search-area {
+      display: flex;
+      gap: 10px;
+      max-width: 520px;
+      margin: 0 auto 32px;
+    }
+
+    .search-area input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1.5px solid #ddd;
+      border-radius: 12px;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .search-area input:focus { border-color: #C30452; }
+
+    .search-area button {
+      padding: 12px 22px;
+      background: #C30452;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      white-space: nowrap;
+    }
+
+    .search-area button:hover { opacity: 0.85; }
+    .search-area button:disabled { opacity: 0.4; cursor: default; }
+
+    /* 좌우 패널 */
+    .panels {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .panel {
+      background: #fff;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+    }
+
+    .panel-header {
+      padding: 16px 18px 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .panel-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: #111;
+      margin-bottom: 3px;
+    }
+
+    .panel-desc {
+      font-size: 11.5px;
+      color: #999;
+    }
+
+    /* 갤러리 (프론트 스타일) */
+    .gallery {
+      height: 220px;
+      display: flex;
+      gap: 2px;
+      background: #1a1a1a;
+    }
+
+    .gallery-main {
+      flex: 1.5;
+      overflow: hidden;
+      background: #222;
+    }
+
+    .gallery-main img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .gallery-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 2px;
+    }
+
+    .gallery-thumb {
+      background: #2a2a2a;
+      overflow: hidden;
+    }
+
+    .gallery-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* 상태 표시 */
+    .panel-body {
+      padding: 16px 18px;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ddd;
+      flex-shrink: 0;
+    }
+
+    .status-dot.loading { background: #f59e0b; animation: blink 0.8s ease-in-out infinite; }
+    .status-dot.done-miss { background: #ef4444; }
+    .status-dot.done-hit  { background: #22c55e; }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .status-text {
+      font-size: 13px;
+      font-weight: 600;
+      color: #555;
+    }
+
+    /* 시간 */
+    .time-box {
+      background: #f8f8f8;
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+
+    .time-label {
+      font-size: 12px;
+      color: #999;
+      font-weight: 500;
+    }
+
+    .time-value {
+      font-size: 28px;
+      font-weight: 900;
+      color: #111;
+      letter-spacing: -1px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .time-unit {
+      font-size: 13px;
+      color: #888;
+      font-weight: 600;
+    }
+
+    .time-badge {
+      margin-left: auto;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 20px;
+    }
+
+    .time-badge.miss { background: #fee2e2; color: #dc2626; }
+    .time-badge.hit  { background: #dcfce7; color: #16a34a; }
+
+    /* 플레이스홀더 */
+    .placeholder {
+      height: 220px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #f8f8f8;
+      gap: 8px;
+      color: #bbb;
+    }
+
+    .placeholder span { font-size: 36px; }
+    .placeholder p { font-size: 13px; }
+
+    /* 비교 요약 */
+    .summary {
+      max-width: 900px;
+      margin: 20px auto 0;
+      background: #fff;
+      border-radius: 14px;
+      padding: 16px 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      display: none;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .summary.visible { display: flex; }
+
+    .summary-icon { font-size: 24px; }
+
+    .summary-text { flex: 1; font-size: 13px; color: #555; line-height: 1.6; }
+    .summary-text strong { color: #111; }
+
+    .speedup {
+      font-size: 22px;
+      font-weight: 900;
+      color: #22c55e;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+
+<h1>⚡ 이미지 캐시 테스트</h1>
+<p class="subtitle">동일 쿼리를 두 번 호출해서 Redis 캐시 효과를 확인해요</p>
+
+<div class="search-area">
+  <input id="queryInput" type="text" placeholder="가게명 입력 (예: 투홀릭치킨서초점)" value="투홀릭치킨서초점" />
+  <button id="testBtn" onclick="runTest()">테스트 시작</button>
+</div>
+
+<div class="panels">
+  <!-- 왼쪽: 캐시 미적용 (1차 호출) -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">캐시 미적용 — /api/images/nocache</div>
+      <div class="panel-desc">매번 네이버 API 직접 호출 (항상 느림)</div>
+    </div>
+
+    <div id="gallery1">
+      <div class="placeholder">
+        <span>🔍</span>
+        <p>검색 전</p>
+      </div>
+    </div>
+
+    <div class="panel-body">
+      <div class="status">
+        <div class="status-dot" id="dot1"></div>
+        <span class="status-text" id="statusText1">대기 중</span>
+      </div>
+      <div class="time-box">
+        <span class="time-label">응답시간</span>
+        <span class="time-value" id="time1">—</span>
+        <span class="time-unit">ms</span>
+        <span class="time-badge miss" id="badge1" style="display:none">MISS</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 오른쪽: 캐시 적용 (2차 호출) -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">캐시 적용 — /api/images</div>
+      <div class="panel-desc">Redis에서 즉시 반환 → 네이버 API 호출 X</div>
+    </div>
+
+    <div id="gallery2">
+      <div class="placeholder">
+        <span>⚡</span>
+        <p>1차 호출 완료 후 시작</p>
+      </div>
+    </div>
+
+    <div class="panel-body">
+      <div class="status">
+        <div class="status-dot" id="dot2"></div>
+        <span class="status-text" id="statusText2">대기 중</span>
+      </div>
+      <div class="time-box">
+        <span class="time-label">응답시간</span>
+        <span class="time-value" id="time2">—</span>
+        <span class="time-unit">ms</span>
+        <span class="time-badge hit" id="badge2" style="display:none">HIT</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 결과 요약 -->
+<div class="summary" id="summary">
+  <div class="summary-icon">🚀</div>
+  <div class="summary-text" id="summaryText"></div>
+  <div class="speedup" id="speedup"></div>
+</div>
+
+<script>
+  async function runTest() {
+    const query = document.getElementById('queryInput').value.trim()
+    if (!query) { alert('가게명을 입력하세요!'); return; }
+
+    const btn = document.getElementById('testBtn')
+    btn.disabled = true
+    document.getElementById('summary').classList.remove('visible')
+
+    // 초기화
+    reset()
+
+    // ── 왼쪽: 캐시 없음 (매번 네이버 API 직접 호출) ──
+    setStatus(1, 'loading', '네이버 API 직접 호출 중...')
+    const t1Start = performance.now()
+
+    let images
+    try {
+      const res = await fetch(`/api/images/nocache?query=${encodeURIComponent(query)}`)
+      images = await res.json()
+    } catch(e) {
+      setStatus(1, 'done-miss', '오류 발생')
+      btn.disabled = false
+      return
+    }
+
+    const t1 = Math.round(performance.now() - t1Start)
+    document.getElementById('time1').textContent = t1
+    document.getElementById('badge1').style.display = ''
+    setStatus(1, 'done-miss', '완료 — 네이버 API 호출함')
+    renderGallery('gallery1', images)
+
+    // ── 오른쪽: 캐시 적용 (Redis에서 즉시 반환) ──────
+    setStatus(2, 'loading', 'Redis 조회 중...')
+    const t2Start = performance.now()
+
+    try {
+      const res2 = await fetch(`/api/images?query=${encodeURIComponent(query)}`)
+      await res2.json()
+    } catch(e) {
+      setStatus(2, 'done-hit', '오류 발생')
+      btn.disabled = false
+      return
+    }
+
+    const t2 = Math.round(performance.now() - t2Start)
+    document.getElementById('time2').textContent = t2
+    document.getElementById('badge2').style.display = ''
+    setStatus(2, 'done-hit', '완료 — Redis 캐시 HIT!')
+    renderGallery('gallery2', images)
+
+    // ── 요약 ──────────────────────────────────────────
+    const ratio = (t1 / Math.max(t2, 1)).toFixed(1)
+    const saved  = t1 - t2
+    document.getElementById('summaryText').innerHTML =
+      `<strong>"${query}"</strong> 기준 — ` +
+      `1차(MISS): <strong>${t1}ms</strong> → 2차(HIT): <strong>${t2}ms</strong><br>` +
+      `Redis 캐싱으로 약 <strong>${saved}ms</strong> 단축`
+    document.getElementById('speedup').textContent = `${ratio}x 빠름`
+    document.getElementById('summary').classList.add('visible')
+
+    btn.disabled = false
+  }
+
+  function renderGallery(containerId, images) {
+    const container = document.getElementById(containerId)
+    if (!images || images.length === 0) {
+      container.innerHTML = '<div class="placeholder"><span>😢</span><p>이미지 없음</p></div>'
+      return
+    }
+
+    const thumbs = [1, 2, 3, 4].map(i => {
+      const img = images[i]
+      return img
+        ? `<div class="gallery-thumb"><img src="${img.link || img.thumbnail}" alt="" onerror="this.style.display='none'"/></div>`
+        : `<div class="gallery-thumb"></div>`
+    }).join('')
+
+    container.innerHTML = `
+      <div class="gallery">
+        <div class="gallery-main">
+          <img src="${images[0].link || images[0].thumbnail}" alt="" onerror="this.style.display='none'"/>
+        </div>
+        <div class="gallery-grid">${thumbs}</div>
+      </div>`
+  }
+
+  function setStatus(panel, state, text) {
+    const dot  = document.getElementById(`dot${panel}`)
+    const span = document.getElementById(`statusText${panel}`)
+    dot.className = `status-dot ${state}`
+    span.textContent = text
+  }
+
+  function reset() {
+    ;[1, 2].forEach(n => {
+      document.getElementById(`time${n}`).textContent = '—'
+      document.getElementById(`badge${n}`).style.display = 'none'
+      document.getElementById(`dot${n}`).className = 'status-dot'
+      document.getElementById(`statusText${n}`).textContent = '대기 중'
+    })
+
+    document.getElementById('gallery1').innerHTML =
+      '<div class="placeholder"><span>🔍</span><p>검색 중...</p></div>'
+    document.getElementById('gallery2').innerHTML =
+      '<div class="placeholder"><span>⚡</span><p>1차 호출 완료 후 시작</p></div>'
+  }
+</script>
+</body>
+</html>

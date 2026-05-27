@@ -23,6 +23,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -34,6 +35,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @Validated
@@ -87,10 +90,30 @@ public class PlaceController {
     }
 
     @GetMapping("/api/images")
-    public NaverImageClient.ImageSearchResponse images(
+    public List<NaverImageClient.Image> images(
             @NotBlank(message = "검색어는 필수입니다.") @RequestParam String query
     ) {
-        return naverImageClient.search(query);
+        return naverImageClient.search(query).images();
+    }
+
+    /** 캐시 미적용 — 테스트/비교용 */
+    @GetMapping("/api/images/nocache")
+    public List<NaverImageClient.Image> imagesNoCache(
+            @NotBlank(message = "검색어는 필수입니다.") @RequestParam String query
+    ) {
+        return naverImageClient.searchDirect(query).images();
+    }
+
+    /** 벌크 이미지 조회 — 여러 가게명을 한 번에, 병렬 처리 + Redis 캐시 활용 */
+    @PostMapping("/api/images/bulk")
+    public Map<String, List<NaverImageClient.Image>> imagesBulk(
+            @RequestBody @Size(max = 50, message = "한 번에 최대 50개까지 조회 가능합니다.") List<String> queries
+    ) {
+        return queries.parallelStream()
+                .collect(Collectors.toMap(
+                        query -> query,
+                        query -> naverImageClient.search(query).images()
+                ));
     }
 
     @PostMapping("/api/reports")

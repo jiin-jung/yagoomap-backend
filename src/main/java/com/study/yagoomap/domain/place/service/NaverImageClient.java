@@ -3,6 +3,7 @@ package com.study.yagoomap.domain.place.service;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.study.yagoomap.global.error.ApiException;
 import com.study.yagoomap.global.error.ErrorCode;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -12,9 +13,10 @@ import java.util.List;
 @Component
 public class NaverImageClient {
 
-    private static final int DEFAULT_DISPLAY = 3;
+    private static final int DEFAULT_DISPLAY = 5;
     private static final String DEFAULT_SORT = "sim";
     private static final String DEFAULT_FILTER = "large";
+
 
     private final RestClient restClient;
     private final NaverImageProperties properties;
@@ -26,7 +28,18 @@ public class NaverImageClient {
         this.properties = properties;
     }
 
+    /** 캐시 적용 — 실서비스용 */
+    @Cacheable(value = "images", key = "#query")
     public ImageSearchResponse search(String query) {
+        return fetch(query);
+    }
+
+    /** 캐시 미적용 — 테스트/비교용 */
+    public ImageSearchResponse searchDirect(String query) {
+        return fetch(query);
+    }
+
+    private ImageSearchResponse fetch(String query) {
         if (isBlank(properties.clientId()) || isBlank(properties.clientSecret())) {
             throw new ApiException(ErrorCode.NAVER_API_KEY_MISSING);
         }
