@@ -191,9 +191,14 @@ function renderDetail() {
             </div>
         </div>
         <div class="detail-actions">
-            <a href="${place.naverMapUrl}" target="_blank" rel="noreferrer">길찾기</a>
+            <a href="${naverMapSearchUrl(place)}" target="_blank" rel="noreferrer">길찾기</a>
         </div>
     `;
+}
+
+function naverMapSearchUrl(place) {
+    const query = [place.name, place.address].filter(Boolean).join(" ");
+    return `https://map.naver.com/p/search/${encodeURIComponent(query)}`;
 }
 
 function selectPlace(id) {

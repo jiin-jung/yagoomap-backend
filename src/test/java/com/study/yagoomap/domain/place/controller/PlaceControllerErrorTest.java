@@ -45,8 +45,6 @@ class PlaceControllerErrorTest {
                                   "team": "LG 트윈스",
                                   "category": "포차",
                                   "phone": "02-9999-0000",
-                                  "naverMapUrl": "https://map.naver.com/",
-                                  "photos": [],
                                   "note": "duplicate",
                                   "tags": [],
                                   "status": "ACTIVE"

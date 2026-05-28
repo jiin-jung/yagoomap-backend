@@ -1,5 +1,6 @@
 package com.study.yagoomap.domain.place.entity;
 
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -7,6 +8,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "crawl_candidates")
@@ -32,6 +35,12 @@ public class CrawlCandidateEntity {
     private LocalDateTime collectedAt;
     private String status;
     private String duplicateReason;
+    private String sourceUrl;
+    private String duplicateCheckResult;
+    private String matchScore;
+
+    @ElementCollection
+    private List<String> sourceTeams = new ArrayList<>();
 
     public CrawlCandidateEntity() {
     }
@@ -166,5 +175,37 @@ public class CrawlCandidateEntity {
 
     public void setDuplicateReason(String duplicateReason) {
         this.duplicateReason = duplicateReason;
+    }
+
+    public String getSourceUrl() {
+        return sourceUrl;
+    }
+
+    public void setSourceUrl(String sourceUrl) {
+        this.sourceUrl = sourceUrl;
+    }
+
+    public String getDuplicateCheckResult() {
+        return duplicateCheckResult;
+    }
+
+    public void setDuplicateCheckResult(String duplicateCheckResult) {
+        this.duplicateCheckResult = duplicateCheckResult;
+    }
+
+    public List<String> getSourceTeams() {
+        return sourceTeams;
+    }
+
+    public void setSourceTeams(List<String> sourceTeams) {
+        this.sourceTeams = sourceTeams == null ? new ArrayList<>() : new ArrayList<>(sourceTeams);
+    }
+
+    public String getMatchScore() {
+        return matchScore;
+    }
+
+    public void setMatchScore(String matchScore) {
+        this.matchScore = matchScore;
     }
 }

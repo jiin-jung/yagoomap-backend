@@ -240,7 +240,6 @@ function startEditPlace(place) {
     placeForm.elements.team.value = place.team ?? "";
     placeForm.elements.category.value = place.category ?? "";
     placeForm.elements.phone.value = place.phone ?? "";
-    placeForm.elements.naverMapUrl.value = place.naverMapUrl ?? "";
     placeForm.elements.note.value = place.note ?? "";
     placeForm.elements.tags.value = (place.tags ?? []).join(", ");
     placeForm.scrollIntoView({behavior: "smooth", block: "start"});
@@ -254,7 +253,6 @@ function resetPlaceForm() {
     placeForm.elements.teamId.value = "1";
     placeForm.elements.team.value = "LG 트윈스";
     placeForm.elements.category.value = "술집";
-    placeForm.elements.naverMapUrl.value = "https://map.naver.com/";
     placeFormTitle.textContent = "장소 등록";
     placeFormMode.textContent = "신규 응원 장소";
     placeSubmitButton.textContent = "등록";
@@ -319,9 +317,6 @@ function placeBody(data) {
         team: data.get("team"),
         category: data.get("category"),
         phone: data.get("phone"),
-        instagramUrl: "",
-        naverMapUrl: data.get("naverMapUrl"),
-        photos: [],
         note: data.get("note"),
         tags: splitList(data.get("tags")),
         status: "ACTIVE"

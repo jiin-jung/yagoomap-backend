@@ -2,6 +2,7 @@ package com.study.yagoomap.domain.place.controller;
 
 import com.study.yagoomap.domain.place.dto.ApproveCrawlCandidateRequest;
 import com.study.yagoomap.domain.place.dto.ApproveReportRequest;
+import com.study.yagoomap.domain.place.dto.BulkCrawlCandidateRequest;
 import com.study.yagoomap.domain.place.dto.CrawlCandidate;
 import com.study.yagoomap.domain.place.dto.CrawlCandidateRequest;
 import com.study.yagoomap.domain.place.dto.Dashboard;
@@ -20,6 +21,7 @@ import com.study.yagoomap.domain.place.service.KakaoLocalClient;
 import com.study.yagoomap.domain.place.service.NaverImageClient;
 import com.study.yagoomap.domain.place.service.PlaceService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -183,6 +185,14 @@ public class PlaceController {
     @PostMapping("/api/admin/crawl-candidates")
     public CrawlCandidate createCrawlCandidate(@Valid @RequestBody CrawlCandidateRequest request) {
         return placeService.createCrawlCandidate(request);
+    }
+
+    @PostMapping("/api/crawl-candidates/bulk")
+    public List<CrawlCandidate> createCrawlCandidates(
+            @NotEmpty(message = "검수 후보 목록은 1개 이상이어야 합니다.")
+            @Valid @RequestBody List<@Valid BulkCrawlCandidateRequest> requests
+    ) {
+        return placeService.createCrawlCandidates(requests);
     }
 
     @GetMapping("/api/admin/crawl-candidates")

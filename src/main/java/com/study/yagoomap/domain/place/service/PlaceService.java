@@ -2,6 +2,7 @@ package com.study.yagoomap.domain.place.service;
 
 import com.study.yagoomap.domain.place.dto.ApproveCrawlCandidateRequest;
 import com.study.yagoomap.domain.place.dto.ApproveReportRequest;
+import com.study.yagoomap.domain.place.dto.BulkCrawlCandidateRequest;
 import com.study.yagoomap.domain.place.dto.CrawlCandidate;
 import com.study.yagoomap.domain.place.dto.CrawlCandidateRequest;
 import com.study.yagoomap.domain.place.dto.Dashboard;
@@ -31,6 +32,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.Comparator;
 import java.util.ArrayList;
 import java.util.List;
@@ -226,8 +229,6 @@ public class PlaceService {
                 "",
                 "",
                 "",
-                "",
-                List.of(),
                 report.getContent(),
                 List.of("제보 승인"),
                 ACTIVE
@@ -306,6 +307,15 @@ public class PlaceService {
         return toCrawlCandidate(crawlCandidateRepository.save(candidate));
     }
 
+    public List<CrawlCandidate> createCrawlCandidates(List<BulkCrawlCandidateRequest> requests) {
+        List<CrawlCandidateEntity> candidates = requests.stream()
+                .map(this::toCrawlCandidateEntity)
+                .toList();
+        return crawlCandidateRepository.saveAll(candidates).stream()
+                .map(this::toCrawlCandidate)
+                .toList();
+    }
+
     @Transactional(readOnly = true)
     public List<CrawlCandidate> findCrawlCandidates(String status) {
         List<CrawlCandidateEntity> candidates = status == null || status.isBlank()
@@ -338,9 +348,7 @@ public class PlaceService {
                 candidate.getCategoryName(),
                 candidate.getCategoryGroupCode(),
                 candidate.getPhone(),
-                "",
                 candidate.getMapLink(),
-                List.of(),
                 request.note(),
                 request.tags() == null ? List.of("검수 승인") : request.tags(),
                 ACTIVE
@@ -412,6 +420,26 @@ public class PlaceService {
         return toCrawlCandidate(crawlCandidateRepository.save(candidate));
     }
 
+    private CrawlCandidateEntity toCrawlCandidateEntity(BulkCrawlCandidateRequest request) {
+        CrawlCandidateEntity candidate = new CrawlCandidateEntity();
+        candidate.setSource(request.source());
+        candidate.setKeyword(request.keyword());
+        candidate.setName(request.name());
+        candidate.setAddress(request.address());
+        candidate.setPhone(request.phone());
+        candidate.setMapLink(request.mapLink());
+        candidate.setCategoryName(request.categoryName());
+        candidate.setLatitude(request.latitude());
+        candidate.setLongitude(request.longitude());
+        candidate.setCollectedAt(parseCollectedAt(request.collectedAt()));
+        candidate.setStatus(valueOrDefault(request.status(), PENDING));
+        candidate.setSourceUrl(request.sourceUrl());
+        candidate.setDuplicateCheckResult(valueOrDefault(request.duplicateCheckResult(), "UNCHECKED"));
+        candidate.setSourceTeams(request.sourceTeams());
+        candidate.setMatchScore(request.matchScore());
+        return candidate;
+    }
+
     private void markDuplicateOrPending(CrawlCandidateEntity candidate) {
         Optional<String> duplicateReason = findDuplicateReason(
                 candidate.getSourceId(),
@@ -467,13 +495,7 @@ public class PlaceService {
         place.setCategoryName(valueOrDefault(request.categoryName(), place.getCategoryName()));
         place.setCategoryGroupCode(valueOrDefault(request.categoryGroupCode(), place.getCategoryGroupCode()));
         place.setPhone(valueOrDefault(request.phone(), place.getPhone()));
-        place.setInstagramUrl(valueOrDefault(request.instagramUrl(), place.getInstagramUrl()));
-        place.setNaverMapUrl(valueOrDefault(request.naverMapUrl(), place.getNaverMapUrl()));
         place.setKakaoPlaceUrl(valueOrDefault(request.kakaoPlaceUrl(), place.getKakaoPlaceUrl()));
-        if (request.photos() != null) {
-            place.setPhotos(request.photos());
-            place.setRepresentativeImageUrl(firstOrDefault(request.photos(), ""));
-        }
         place.setNote(valueOrDefault(request.note(), place.getNote()));
         place.setStatus(valueOrDefault(request.status(), place.getStatus()));
         if (request.tags() != null) {
@@ -569,11 +591,8 @@ public class PlaceService {
                 place.getCategoryName(),
                 place.getCategoryGroupCode(),
                 place.getPhone(),
-                place.getInstagramUrl(),
-                place.getNaverMapUrl(),
                 place.getKakaoPlaceUrl(),
                 place.getRepresentativeImageUrl(),
-                new ArrayList<>(place.getPhotos()),
                 place.getNote(),
                 place.getStatus(),
                 place.getRating(),
@@ -594,7 +613,7 @@ public class PlaceService {
     }
 
     private CrawlCandidate toCrawlCandidate(CrawlCandidateEntity candidate) {
-        return new CrawlCandidate(candidate.getId(), candidate.getSource(), candidate.getSourceId(), candidate.getKeyword(), candidate.getName(), candidate.getAddress(), candidate.getRoadAddress(), candidate.getPhone(), candidate.getMapLink(), candidate.getCategoryName(), candidate.getCategoryGroupCode(), candidate.getLatitude(), candidate.getLongitude(), candidate.getDistanceMeters(), stringify(candidate.getCollectedAt()), candidate.getStatus(), candidate.getDuplicateReason());
+        return new CrawlCandidate(candidate.getId(), candidate.getSource(), candidate.getSourceId(), candidate.getKeyword(), candidate.getName(), candidate.getAddress(), candidate.getRoadAddress(), candidate.getPhone(), candidate.getMapLink(), candidate.getCategoryName(), candidate.getCategoryGroupCode(), candidate.getLatitude(), candidate.getLongitude(), candidate.getDistanceMeters(), stringify(candidate.getCollectedAt()), candidate.getStatus(), candidate.getDuplicateReason(), candidate.getSourceUrl(), candidate.getDuplicateCheckResult(), new ArrayList<>(candidate.getSourceTeams()), candidate.getMatchScore());
     }
 
     private boolean matches(String expected, String actual) {
@@ -672,6 +691,21 @@ public class PlaceService {
             return value == null || value.isBlank() ? 0 : Integer.parseInt(value);
         } catch (NumberFormatException exception) {
             return 0;
+        }
+    }
+
+    private LocalDateTime parseCollectedAt(String value) {
+        if (value == null || value.isBlank()) {
+            return now();
+        }
+        try {
+            return LocalDateTime.parse(value);
+        } catch (DateTimeParseException exception) {
+            try {
+                return OffsetDateTime.parse(value).toLocalDateTime();
+            } catch (DateTimeParseException ignored) {
+                throw new ApiException(ErrorCode.INVALID_REQUEST, "collectedAt은 ISO 8601 형식이어야 합니다.");
+            }
         }
     }
 
