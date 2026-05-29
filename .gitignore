@@ -42,3 +42,6 @@ out/
 .env.*
 application-local.yaml
 src/main/resources/application-local.yaml
+
+### workflow
+.github
