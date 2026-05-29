@@ -33,7 +33,8 @@ jobs:
 
       - name: Upload jar to S3
         run: |
-          aws s3 cp build/libs/*.jar s3://baseball-map-backend/app.jar
+            JAR_FILE=$(ls build/libs/*.jar | grep -v plain)
+            aws s3 cp $JAR_FILE s3://baseball-map-backend/app.jar
 
       - name: Deploy to EC2 via SSM
         run: |
