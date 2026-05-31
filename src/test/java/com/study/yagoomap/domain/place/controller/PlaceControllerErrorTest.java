@@ -8,6 +8,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -69,5 +70,43 @@ class PlaceControllerErrorTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("COMMON_400_001"))
                 .andExpect(jsonPath("$.errors.length()").value(2));
+    }
+
+    @Test
+    void createsReviewWithCreatedStatus() throws Exception {
+        mockMvc.perform(post("/api/places/1/reviews")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "content": "화면이 크고 응원 분위기가 좋습니다.",
+                                  "rating": 5
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.placeId").value(1))
+                .andExpect(jsonPath("$.content").value("화면이 크고 응원 분위기가 좋습니다."))
+                .andExpect(jsonPath("$.rating").value(5))
+                .andExpect(jsonPath("$.active").value(true));
+    }
+
+    @Test
+    void deletesReviewWithNoContentStatus() throws Exception {
+        String response = mockMvc.perform(post("/api/places/1/reviews")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "content": "삭제할 리뷰입니다.",
+                                  "rating": 4
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String reviewId = response.replaceAll(".*\\\"id\\\":(\\d+).*", "$1");
+
+        mockMvc.perform(delete("/api/places/1/reviews/{reviewId}", reviewId))
+                .andExpect(status().isNoContent());
     }
 }

@@ -26,6 +26,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -33,6 +34,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.validation.annotation.Validated;
 
@@ -150,6 +152,7 @@ public class PlaceController {
     }
 
     @PostMapping("/api/places/{placeId}/reviews")
+    @ResponseStatus(HttpStatus.CREATED)
     public Review createReview(
             @PathVariable long placeId,
             @Valid @RequestBody ReviewRequest request
@@ -163,6 +166,7 @@ public class PlaceController {
     }
 
     @DeleteMapping("/api/places/{placeId}/reviews/{reviewId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteReview(@PathVariable long placeId, @PathVariable long reviewId) {
         placeService.deleteReview(placeId, reviewId);
     }
