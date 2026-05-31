@@ -28,9 +28,15 @@ import com.study.yagoomap.domain.place.repository.ReviewRepository;
 import com.study.yagoomap.global.error.ApiException;
 import com.study.yagoomap.global.error.ErrorCode;
 import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeParseException;
@@ -50,29 +56,37 @@ public class PlaceService {
     private static final String APPROVED = "APPROVED";
     private static final String REJECTED = "REJECTED";
     private static final String DUPLICATE = "DUPLICATE";
+    private static final String PLACES_CSV = "/seed/places.csv";
 
     private final PlaceRepository placeRepository;
     private final ReportRepository reportRepository;
     private final ReviewRepository reviewRepository;
     private final CrawlCandidateRepository crawlCandidateRepository;
     private final KakaoLocalClient kakaoLocalClient;
+    private final boolean csvSeedEnabled;
 
     public PlaceService(
             PlaceRepository placeRepository,
             ReportRepository reportRepository,
             ReviewRepository reviewRepository,
             CrawlCandidateRepository crawlCandidateRepository,
-            KakaoLocalClient kakaoLocalClient
+            KakaoLocalClient kakaoLocalClient,
+            @Value("${yagoomap.seed.csv.enabled:true}") boolean csvSeedEnabled
     ) {
         this.placeRepository = placeRepository;
         this.reportRepository = reportRepository;
         this.reviewRepository = reviewRepository;
         this.crawlCandidateRepository = crawlCandidateRepository;
         this.kakaoLocalClient = kakaoLocalClient;
+        this.csvSeedEnabled = csvSeedEnabled;
     }
 
     @PostConstruct
     void seed() {
+        if (csvSeedEnabled) {
+            importPlacesCsv();
+        }
+
         if (placeRepository.count() > 0) {
             return;
         }
@@ -440,6 +454,111 @@ public class PlaceService {
         return candidate;
     }
 
+    private void importPlacesCsv() {
+        try (InputStream stream = getClass().getResourceAsStream(PLACES_CSV)) {
+            if (stream == null) {
+                return;
+            }
+
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
+                reader.readLine();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    saveCsvPlace(parseCsvLine(line));
+                }
+            }
+        } catch (IOException exception) {
+            throw new IllegalStateException("장소 CSV를 읽을 수 없습니다.", exception);
+        }
+    }
+
+    private void saveCsvPlace(List<String> row) {
+        if (row.size() < 12 || isBlank(row.get(0))) {
+            return;
+        }
+
+        String name = clean(row.get(0));
+        String address = clean(row.get(1));
+        double latitude = toDouble(row.get(2));
+        double longitude = toDouble(row.get(3));
+        String team = clean(row.get(4));
+        long teamId = toLong(row.get(5));
+        String categoryName = clean(row.get(6));
+        String category = clean(row.get(7));
+        String phone = clean(row.get(8));
+        String note = clean(row.get(9));
+        List<String> tags = splitTags(row.get(10));
+        String status = valueOrDefault(clean(row.get(11)), ACTIVE);
+
+        if (findDuplicateReason(null, name, address, phone, latitude, longitude, null).isPresent()) {
+            return;
+        }
+
+        PlaceEntity place = new PlaceEntity();
+        place.setName(name);
+        place.setTeam(team);
+        place.setTeamId(teamId);
+        place.setDistrict(districtFromAddress(address));
+        place.setAddress(address);
+        place.setLatitude(latitude);
+        place.setLongitude(longitude);
+        place.setCategory(category);
+        place.setCategoryName(categoryName);
+        place.setPhone(phone);
+        place.setInstagramUrl("");
+        place.setNaverMapUrl("");
+        place.setRepresentativeImageUrl("");
+        place.setPhotos(List.of());
+        place.setNote(note);
+        place.setStatus(status);
+        place.setRating(0.0);
+        place.setReviewCount(0);
+        place.setDistanceMeters(0);
+        place.setTags(tags);
+        place.setCreatedAt(now());
+        place.setUpdatedAt(now());
+        placeRepository.save(place);
+    }
+
+    private List<String> parseCsvLine(String line) {
+        List<String> values = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+        boolean quoted = false;
+
+        for (int index = 0; index < line.length(); index++) {
+            char character = line.charAt(index);
+            if (character == '"') {
+                if (quoted && index + 1 < line.length() && line.charAt(index + 1) == '"') {
+                    current.append(character);
+                    index++;
+                } else {
+                    quoted = !quoted;
+                }
+            } else if (character == ',' && !quoted) {
+                values.add(current.toString());
+                current.setLength(0);
+            } else {
+                current.append(character);
+            }
+        }
+        values.add(current.toString());
+        return values;
+    }
+
+    private List<String> splitTags(String value) {
+        if (isBlank(value)) {
+            return List.of();
+        }
+        List<String> tags = new ArrayList<>();
+        for (String tag : value.split(",")) {
+            String cleaned = clean(tag);
+            if (!cleaned.isBlank()) {
+                tags.add(cleaned);
+            }
+        }
+        return tags;
+    }
+
     private void markDuplicateOrPending(CrawlCandidateEntity candidate) {
         Optional<String> duplicateReason = findDuplicateReason(
                 candidate.getSourceId(),
@@ -680,7 +799,15 @@ public class PlaceService {
 
     private double toDouble(String value) {
         try {
-            return value == null || value.isBlank() ? 0 : Double.parseDouble(value);
+            return value == null || value.isBlank() ? 0 : Double.parseDouble(clean(value));
+        } catch (NumberFormatException exception) {
+            return 0;
+        }
+    }
+
+    private long toLong(String value) {
+        try {
+            return value == null || value.isBlank() ? 0 : Long.parseLong(clean(value));
         } catch (NumberFormatException exception) {
             return 0;
         }
@@ -715,6 +842,10 @@ public class PlaceService {
 
     private static LocalDateTime now() {
         return LocalDateTime.now();
+    }
+
+    private String clean(String value) {
+        return value == null ? "" : value.replace("\uFEFF", "").trim();
     }
 
 }

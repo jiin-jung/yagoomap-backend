@@ -18,3 +18,8 @@ naver:
     base-url: https://openapi.naver.com
     client-id:
     client-secret:
+
+yagoomap:
+  seed:
+    csv:
+      enabled: false
