@@ -9,7 +9,6 @@ public record ReportRequest(
         String address,
         long teamId,
         String team,
-        @NotBlank(message = "제보 내용은 필수입니다.")
         String content,
         String referenceLink
 ) {

@@ -203,7 +203,7 @@ public class PlaceService {
                 request.address(),
                 request.teamId(),
                 request.team(),
-                request.content(),
+                Optional.ofNullable(request.content()).orElse(""),
                 Optional.ofNullable(request.referenceLink()).orElse("")
         )));
     }
