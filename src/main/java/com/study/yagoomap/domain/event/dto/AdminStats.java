@@ -21,7 +21,8 @@ public record AdminStats(
         List<VenueCount> topVenues,
         List<KeywordCount> topKeywords,
         List<ReferrerCount> referrers,
-        List<DailyCount> dailyTrend
+        List<DailyCount> dailyTrend,
+        List<DailyCount> dailyDauTrend
 ) {
 
     public record TypeCount(String type, long count) {

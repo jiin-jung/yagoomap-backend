@@ -41,4 +41,10 @@ public interface EventLogRepository extends JpaRepository<EventLogEntity, Long> 
     @Query("select cast(e.createdAt as date), count(e) from EventLogEntity e "
             + "where e.createdAt >= :from group by cast(e.createdAt as date) order by cast(e.createdAt as date)")
     List<Object[]> dailyTrendSince(@Param("from") LocalDateTime from);
+
+    /** 일별 순방문자(DAU): session_id 기준 unique 카운트 */
+    @Query("select cast(e.createdAt as date), count(distinct e.sessionId) from EventLogEntity e "
+            + "where e.sessionId is not null and e.createdAt >= :from "
+            + "group by cast(e.createdAt as date) order by cast(e.createdAt as date)")
+    List<Object[]> dailyDauTrendSince(@Param("from") LocalDateTime from);
 }

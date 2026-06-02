@@ -54,7 +54,8 @@ public class StatsService {
                 topVenues(rangeFrom),
                 topKeywords(rangeFrom),
                 referrers(rangeFrom),
-                dailyTrend(rangeFrom)
+                dailyTrend(rangeFrom),
+                dailyDauTrend(rangeFrom)
         );
     }
 
@@ -91,6 +92,12 @@ public class StatsService {
 
     private List<AdminStats.DailyCount> dailyTrend(LocalDateTime from) {
         return eventLogRepository.dailyTrendSince(from).stream()
+                .map(row -> new AdminStats.DailyCount(String.valueOf(row[0]), toLong(row[1])))
+                .toList();
+    }
+
+    private List<AdminStats.DailyCount> dailyDauTrend(LocalDateTime from) {
+        return eventLogRepository.dailyDauTrendSince(from).stream()
                 .map(row -> new AdminStats.DailyCount(String.valueOf(row[0]), toLong(row[1])))
                 .toList();
     }
