@@ -80,13 +80,14 @@ public class IncheonDataController {
         return relay(url);
     }
 
-    /** data.go.kr 응답을 그대로 전달. serviceKey 이중 인코딩 방지를 위해 URI.create 사용. */
+    /** data.go.kr 응답을 그대로 전달. serviceKey 이중 인코딩 방지를 위해 URI.create 사용.
+     *  body는 byte[]로 받아 재인코딩 없이 릴레이 (String 디코딩 시 한글 깨짐 방지). */
     private ResponseEntity<?> relay(String url) {
         try {
-            String body = restClient.get()
+            byte[] body = restClient.get()
                     .uri(URI.create(url))
                     .retrieve()
-                    .body(String.class);
+                    .body(byte[].class);
             return ResponseEntity.ok(body);
         } catch (RestClientException e) {
             return ResponseEntity.status(502)
