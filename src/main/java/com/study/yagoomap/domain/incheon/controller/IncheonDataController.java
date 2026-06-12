@@ -41,7 +41,7 @@ public class IncheonDataController {
     }
 
     /** 인천 버스 도착정보 — 정류소ID 기준 전체 노선 도착예정 (XML 그대로 릴레이). */
-    @GetMapping(value = "/api/busArrival", produces = MediaType.APPLICATION_XML_VALUE)
+    @GetMapping(value = "/api/busArrival", produces = "application/xml;charset=UTF-8")
     public ResponseEntity<?> busArrival(@RequestParam String bstopId) {
         if (apiKey.isBlank()) return keyMissing();
 
@@ -53,7 +53,7 @@ public class IncheonDataController {
     }
 
     /** 기상청 단기예보 — 격자좌표(nx, ny) 기준 최신 발표분 (JSON 그대로 릴레이). */
-    @GetMapping(value = "/api/weather", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/api/weather", produces = "application/json;charset=UTF-8")
     public ResponseEntity<?> weather(@RequestParam String nx, @RequestParam String ny) {
         if (apiKey.isBlank()) return keyMissing();
 
@@ -74,7 +74,7 @@ public class IncheonDataController {
         String url = "https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst"
                 + "?serviceKey=" + apiKey
                 + "&dataType=JSON&numOfRows=400&pageNo=1"
-                + "&base_date=" + baseDay.format(DateTimeFormatter.BASIC_ISO_DATE)
+                + "&base_date=" + baseDay.toLocalDate().format(DateTimeFormatter.BASIC_ISO_DATE)
                 + "&base_time=" + String.format("%02d00", baseHour)
                 + "&nx=" + nx + "&ny=" + ny;
         return relay(url);
