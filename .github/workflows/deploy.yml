@@ -46,6 +46,9 @@ jobs:
             local:
               base-url: https://dapi.kakao.com
               rest-api-key: ${{ secrets.KAKAO_REST_API_KEY }}
+
+          incheon:
+            api-key: ${{ secrets.INCHEON_BUS_API_KEY }}
           EOF
 
       - name: Build with Gradle
