@@ -8,16 +8,13 @@
 <br/>
 
 <div align="center">
-  <!-- 야구맵 메인 화면 또는 서비스 대표 배너 -->
-  <!-- <img src="야구맵 대표 이미지 URL" alt="야구맵" width="85%"/> -->
+  <img src="./assets/yagoomap-main.jpg" alt="야구맵 메인 화면" width="100%"/>
 </div>
 
 <br/>
 
 <div align="center">
   <a href="https://야구맵.kr">홈페이지</a>
-  &nbsp; | &nbsp;
-  <a href="https://api.야구맵.kr/swagger-ui/index.html">Swagger</a>
 </div>
 
 ---
@@ -92,13 +89,6 @@
 - 장소 등록·수정·삭제
 - 서비스 내 장소 필터 정보 제공
 
-<div align="center">
-  <!-- 지도에서 장소를 탐색하고 필터링하는 화면 -->
-  <!-- <img src="장소 탐색 시연 이미지 URL" alt="야구맵 장소 탐색" width="80%"/> -->
-</div>
-
-<br/>
-
 ### 2. KBO 경기 일정 제공
 
 - 특정 날짜의 KBO 경기 조회
@@ -107,26 +97,12 @@
 - 스케줄러 기반 경기 데이터 자동 갱신
 - 관리자용 경기 데이터 수동 동기화
 
-<div align="center">
-  <!-- 오늘의 경기 일정 또는 팀별 경기 화면 -->
-  <!-- <img src="KBO 경기 정보 시연 이미지 URL" alt="KBO 경기 일정" width="80%"/> -->
-</div>
-
-<br/>
-
 ### 3. 장소 리뷰
 
 - 장소별 리뷰 등록
 - 장소별 리뷰 목록 조회
 - 리뷰 삭제
 - 장소별 리뷰 요약 정보 제공
-
-<div align="center">
-  <!-- 장소 상세 및 리뷰 화면 -->
-  <!-- <img src="장소 리뷰 시연 이미지 URL" alt="야구맵 리뷰" width="80%"/> -->
-</div>
-
-<br/>
 
 ### 4. 장소 제보 및 관리자 검수
 
@@ -138,13 +114,6 @@
 - 관리자 승인 후 실제 장소 데이터로 반영
 - 관리자 장소 목록 및 대시보드 제공
 
-<div align="center">
-  <!-- 관리자 장소 검수 대시보드 -->
-  <!-- <img src="관리자 검수 화면 URL" alt="야구맵 관리자 검수" width="80%"/> -->
-</div>
-
-<br/>
-
 ### 5. 외부 장소 및 이미지 데이터 연동
 
 - Kakao Local API 기반 장소 검색
@@ -153,25 +122,11 @@
 - 여러 장소 이미지 병렬 조회
 - Redis 캐시를 활용한 이미지 API 호출 최적화
 
-<div align="center">
-  <!-- Kakao 장소 수집 또는 장소 이미지 조회 화면 -->
-  <!-- <img src="외부 API 연동 시연 이미지 URL" alt="외부 API 연동" width="80%"/> -->
-</div>
-
-<br/>
-
 ### 6. 실시간 접속자 집계
 
 - 클라이언트 세션 기반 heartbeat 처리
 - Redis를 활용한 활성 사용자 상태 관리
 - 현재 서비스 접속자 수 실시간 집계
-
-<div align="center">
-  <!-- 실시간 접속자 표시 화면 -->
-  <!-- <img src="실시간 접속자 화면 URL" alt="실시간 접속자" width="80%"/> -->
-</div>
-
-<br/>
 
 ### 7. 사용자 행동 이벤트 및 운영 통계
 
@@ -179,13 +134,6 @@
 - 이벤트 요청 즉시 `202 Accepted` 반환
 - IPv4 마지막 옥텟 및 IPv6 마지막 그룹 마스킹
 - 최근 1~90일 기준 관리자 운영 통계 조회
-
-<div align="center">
-  <!-- 관리자 통계 화면 -->
-  <!-- <img src="관리자 통계 화면 URL" alt="야구맵 운영 통계" width="80%"/> -->
-</div>
-
-<br/>
 
 ### 8. 서비스 공지 및 공공 데이터 연동
 
@@ -250,9 +198,8 @@
       </td>
     </tr>
     <tr>
-      <td>Documentation & Test</td>
+      <td>Test & Build</td>
       <td>
-        <img src="https://img.shields.io/badge/Swagger-85EA2D?style=flat&logo=swagger&logoColor=black"/>
         <img src="https://img.shields.io/badge/JUnit5-25A162?style=flat&logo=junit5&logoColor=white"/>
         <img src="https://img.shields.io/badge/Gradle-02303A?style=flat&logo=gradle&logoColor=white"/>
       </td>
@@ -263,8 +210,6 @@
 ---
 
 ## 📐 시스템 아키텍처
-
-<div align="center">
 
 ```text
 Client
@@ -287,11 +232,6 @@ GitHub Actions
 Spring Boot Actuator
   └── Prometheus Metrics
 ```
-
-<!-- 시스템 아키텍처 이미지가 준비되면 아래 영역으로 교체 -->
-<!-- <img src="시스템 아키텍처 이미지 URL" alt="야구맵 시스템 아키텍처" width="85%"/> -->
-
-</div>
 
 ---
 
@@ -317,13 +257,6 @@ Notice
  └── 서비스 공지
 ```
 
-<!-- ERD 이미지가 준비되면 아래 영역에 추가 -->
-<!--
-<div align="center">
-  <img src="ERD 이미지 URL" alt="야구맵 ERD" width="90%"/>
-</div>
--->
-
 ---
 
 ## 🔎 주요 API
@@ -344,8 +277,6 @@ Notice
 | GET | `/api/admin/dashboard` | 관리자 대시보드 조회 |
 | GET | `/api/admin/stats` | 운영 통계 조회 |
 | POST | `/api/admin/games/sync` | KBO 경기 데이터 수동 동기화 |
-
-> 전체 API 명세는 Swagger에서 확인할 수 있습니다.
 
 ---
 
