@@ -8,7 +8,7 @@
 <br/>
 
 <div align="center">
-  <img src="./assets/yagoomap-main.jpg" alt="야구맵 메인 화면" width="100%"/>
+  <img src="https://raw.githubusercontent.com/jiin-jung/yagoomap-backend/main/assets/yagoomap-main.jpg" alt="야구맵 메인 화면" width="100%"/>
 </div>
 
 <br/>
@@ -89,6 +89,8 @@
 - 장소 등록·수정·삭제
 - 서비스 내 장소 필터 정보 제공
 
+<br/>
+
 ### 2. KBO 경기 일정 제공
 
 - 특정 날짜의 KBO 경기 조회
@@ -97,12 +99,16 @@
 - 스케줄러 기반 경기 데이터 자동 갱신
 - 관리자용 경기 데이터 수동 동기화
 
+<br/>
+
 ### 3. 장소 리뷰
 
 - 장소별 리뷰 등록
 - 장소별 리뷰 목록 조회
 - 리뷰 삭제
 - 장소별 리뷰 요약 정보 제공
+
+<br/>
 
 ### 4. 장소 제보 및 관리자 검수
 
@@ -114,6 +120,8 @@
 - 관리자 승인 후 실제 장소 데이터로 반영
 - 관리자 장소 목록 및 대시보드 제공
 
+<br/>
+
 ### 5. 외부 장소 및 이미지 데이터 연동
 
 - Kakao Local API 기반 장소 검색
@@ -122,11 +130,15 @@
 - 여러 장소 이미지 병렬 조회
 - Redis 캐시를 활용한 이미지 API 호출 최적화
 
+<br/>
+
 ### 6. 실시간 접속자 집계
 
 - 클라이언트 세션 기반 heartbeat 처리
 - Redis를 활용한 활성 사용자 상태 관리
 - 현재 서비스 접속자 수 실시간 집계
+
+<br/>
 
 ### 7. 사용자 행동 이벤트 및 운영 통계
 
@@ -134,6 +146,8 @@
 - 이벤트 요청 즉시 `202 Accepted` 반환
 - IPv4 마지막 옥텟 및 IPv6 마지막 그룹 마스킹
 - 최근 1~90일 기준 관리자 운영 통계 조회
+
+<br/>
 
 ### 8. 서비스 공지 및 공공 데이터 연동
 
@@ -198,7 +212,7 @@
       </td>
     </tr>
     <tr>
-      <td>Test & Build</td>
+      <td>Documentation & Test</td>
       <td>
         <img src="https://img.shields.io/badge/JUnit5-25A162?style=flat&logo=junit5&logoColor=white"/>
         <img src="https://img.shields.io/badge/Gradle-02303A?style=flat&logo=gradle&logoColor=white"/>
