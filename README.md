@@ -3,6 +3,13 @@
 <div align="center">
   <h1>⚾ 야구맵 - 오늘 야구, 어디서 볼까?</h1>
   <p>야구 경기를 함께 즐길 수 있는 장소를 찾는 지도 기반 웹 서비스</p>
+</div>
+
+<br/>
+
+<div align="center">
+  <img src="assets/yagoomap-main.jpg" alt="야구맵 메인 화면" width="100%"/>
+</div>
 
 <br/>
 
