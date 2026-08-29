@@ -8,12 +8,6 @@
 <br/>
 
 <div align="center">
-  <img src="assets/yagoomap-main.jpg" alt="야구맵 메인 화면" width="100%"/>
-</div>
-
-<br/>
-
-<div align="center">
   <a href="https://야구맵.kr">홈페이지</a>
 </div>
 
