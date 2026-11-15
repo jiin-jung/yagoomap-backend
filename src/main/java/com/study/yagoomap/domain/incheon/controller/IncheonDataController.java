@@ -1,5 +1,8 @@
 package com.study.yagoomap.domain.incheon.controller;
 
+import jakarta.validation.constraints.Pattern;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -8,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.validation.annotation.Validated;
 
 import java.net.URI;
 import java.time.ZoneId;
@@ -27,8 +31,10 @@ import java.util.Map;
  * - 운영: deploy.yml이 생성하는 application-prod.yml의 incheon.api-key (GitHub secret)
  */
 @RestController
+@Validated
 public class IncheonDataController {
 
+    private static final Logger log = LoggerFactory.getLogger(IncheonDataController.class);
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
     /** 기상청 단기예보 발표시각 (내림차순) — 발표 후 약 10분 뒤 제공되어 15분 여유를 둔다. */
     private static final int[] BASE_HOURS = {23, 20, 17, 14, 11, 8, 5, 2};
@@ -42,7 +48,7 @@ public class IncheonDataController {
 
     /** 인천 버스 도착정보 — 정류소ID 기준 전체 노선 도착예정 (XML 그대로 릴레이). */
     @GetMapping(value = "/api/busArrival", produces = "application/xml;charset=UTF-8")
-    public ResponseEntity<?> busArrival(@RequestParam String bstopId) {
+    public ResponseEntity<?> busArrival(@RequestParam @Pattern(regexp = "\\d{1,12}") String bstopId) {
         if (apiKey.isBlank()) return keyMissing();
 
         String url = "https://apis.data.go.kr/6280000/busArrivalService/getAllRouteBusArrivalList"
@@ -54,7 +60,10 @@ public class IncheonDataController {
 
     /** 기상청 단기예보 — 격자좌표(nx, ny) 기준 최신 발표분 (JSON 그대로 릴레이). */
     @GetMapping(value = "/api/weather", produces = "application/json;charset=UTF-8")
-    public ResponseEntity<?> weather(@RequestParam String nx, @RequestParam String ny) {
+    public ResponseEntity<?> weather(
+            @RequestParam @Pattern(regexp = "\\d{1,12}") String nx,
+            @RequestParam @Pattern(regexp = "\\d{1,12}") String ny
+    ) {
         if (apiKey.isBlank()) return keyMissing();
 
         ZonedDateTime now = ZonedDateTime.now(KST);
@@ -90,9 +99,10 @@ public class IncheonDataController {
                     .body(byte[].class);
             return ResponseEntity.ok(body);
         } catch (RestClientException e) {
+            log.warn("Public data API request failed: {}", e.getClass().getSimpleName());
             return ResponseEntity.status(502)
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(Map.of("error", "공공데이터 API 호출 실패", "detail", e.getMessage()));
+                    .body(Map.of("error", "공공데이터 API 호출 실패"));
         }
     }
 

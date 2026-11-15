@@ -38,9 +38,11 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.validation.annotation.Validated;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
 
 @RestController
 @Validated
@@ -113,11 +115,25 @@ public class PlaceController {
     public Map<String, List<NaverImageClient.Image>> imagesBulk(
             @RequestBody @Size(max = 50, message = "한 번에 최대 50개까지 조회 가능합니다.") List<String> queries
     ) {
-        return queries.parallelStream()
-                .collect(Collectors.toMap(
-                        query -> query,
-                        query -> naverImageClient.search(query).images()
-                ));
+        List<String> distinctQueries = queries.stream().distinct().toList();
+        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            var futures = distinctQueries.stream()
+                    .map(query -> executor.submit(() -> naverImageClient.search(query).images()))
+                    .toList();
+            Map<String, List<NaverImageClient.Image>> images = new LinkedHashMap<>();
+            for (int index = 0; index < distinctQueries.size(); index++) {
+                images.put(distinctQueries.get(index), futures.get(index).get());
+            }
+            return images;
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("이미지 조회가 중단되었습니다.", exception);
+        } catch (ExecutionException exception) {
+            if (exception.getCause() instanceof RuntimeException cause) {
+                throw cause;
+            }
+            throw new IllegalStateException("이미지 조회에 실패했습니다.", exception.getCause());
+        }
     }
 
     @PostMapping("/api/reports")

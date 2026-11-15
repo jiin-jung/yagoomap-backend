@@ -8,4 +8,6 @@ import java.util.List;
 public interface ReportRepository extends JpaRepository<ReportEntity, Long> {
 
     List<ReportEntity> findByStatus(String status);
+
+    long countByStatus(String status);
 }
