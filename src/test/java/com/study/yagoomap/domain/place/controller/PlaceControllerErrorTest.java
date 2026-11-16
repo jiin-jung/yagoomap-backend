@@ -24,6 +24,12 @@ class PlaceControllerErrorTest {
     private MockMvc mockMvc;
 
     @Test
+    void rejectsInjectedIncheonQueryParameter() throws Exception {
+        mockMvc.perform(get("/api/busArrival").param("bstopId", "1&numOfRows=99999"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void returnsPlaceNotFoundError() throws Exception {
         mockMvc.perform(get("/api/places/99999"))
                 .andExpect(status().isNotFound())

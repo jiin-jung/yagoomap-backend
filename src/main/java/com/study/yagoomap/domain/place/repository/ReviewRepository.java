@@ -8,4 +8,6 @@ import java.util.List;
 public interface ReviewRepository extends JpaRepository<ReviewEntity, Long> {
 
     List<ReviewEntity> findByPlaceIdAndActive(long placeId, boolean active);
+
+    long countByActive(boolean active);
 }
