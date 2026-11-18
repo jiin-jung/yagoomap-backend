@@ -9,5 +9,7 @@ public interface PlaceRepository extends JpaRepository<PlaceEntity, Long> {
 
     List<PlaceEntity> findByStatus(String status);
 
+    List<PlaceEntity> findTop5ByOrderByIdAsc();
+
     long countByStatus(String status);
 }

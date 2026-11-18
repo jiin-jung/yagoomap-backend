@@ -78,7 +78,7 @@ jobs:
               "aws s3 cp s3://baseball-map-backend/app.jar /app/app.jar",
               "pkill -f app.jar || true",
               "sleep 3",
-              "nohup java -jar /app/app.jar --spring.profiles.active=prod > /app/app.log 2>&1 &",
+              "nohup java -Duser.timezone=Asia/Seoul -jar /app/app.jar --spring.profiles.active=prod > /app/app.log 2>&1 &",
               "sleep 10",
               "pgrep -f app.jar && echo DEPLOY_SUCCESS || echo DEPLOY_FAIL"
             ]' \

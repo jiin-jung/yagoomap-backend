@@ -95,7 +95,7 @@ public class PlaceService {
     }
 
     public Place createPlace(PlaceRequest request) {
-        Optional<String> duplicateReason = findDuplicateReason(request.kakaoPlaceId(), request.name(), request.address(), request.phone(), request.latitude(), request.longitude(), null);
+        Optional<String> duplicateReason = findDuplicateReason(duplicateCandidates(), request.kakaoPlaceId(), request.name(), request.address(), request.phone(), request.latitude(), request.longitude(), null);
         if (duplicateReason.isPresent()) {
             throw new ApiException(ErrorCode.PLACE_DUPLICATED, duplicateReason.get());
         }
@@ -114,6 +114,7 @@ public class PlaceService {
     public Place updatePlace(long placeId, PlaceRequest request) {
         PlaceEntity place = findAnyPlace(placeId);
         Optional<String> duplicateReason = findDuplicateReason(
+                duplicateCandidates(),
                 valueOrDefault(request.kakaoPlaceId(), place.getKakaoPlaceId()),
                 valueOrDefault(request.name(), place.getName()),
                 valueOrDefault(request.address(), place.getAddress()),
@@ -128,14 +129,13 @@ public class PlaceService {
 
         applyPlaceRequest(place, request);
         place.setUpdatedAt(now());
-        return toPlace(placeRepository.save(place));
+        return toPlace(place);
     }
 
     public void deletePlace(long placeId) {
         PlaceEntity place = findAnyPlace(placeId);
         place.setStatus(INACTIVE);
         place.setUpdatedAt(now());
-        placeRepository.save(place);
     }
 
     @Transactional(readOnly = true)
@@ -190,7 +190,6 @@ public class PlaceService {
         ReportEntity report = findReportEntity(reportId);
         report.setStatus(APPROVED);
         report.setRejectReason(null);
-        reportRepository.save(report);
 
         return createPlace(new PlaceRequest(
                 null,
@@ -215,7 +214,7 @@ public class PlaceService {
         ReportEntity report = findReportEntity(reportId);
         report.setStatus(REJECTED);
         report.setRejectReason(request.reason());
-        return toReport(reportRepository.save(report));
+        return toReport(report);
     }
 
     public Review createReview(long placeId, ReviewRequest request) {
@@ -245,7 +244,6 @@ public class PlaceService {
                 .filter(item -> item.getPlaceId() == placeId)
                 .orElseThrow(() -> new ApiException(ErrorCode.REVIEW_NOT_FOUND));
         review.setActive(false);
-        reviewRepository.save(review);
         refreshPlaceRating(placeId);
     }
 
@@ -267,7 +265,7 @@ public class PlaceService {
         long activePlaces = placeRepository.countByStatus(ACTIVE);
         long pendingReports = reportRepository.countByStatus(PENDING);
         long activeReviews = reviewRepository.countByActive(true);
-        return new Dashboard(activePlaces, reportRepository.count(), pendingReports, activeReviews, findAllPlacesForAdmin().stream().limit(5).toList());
+        return new Dashboard(activePlaces, reportRepository.count(), pendingReports, activeReviews, placeRepository.findTop5ByOrderByIdAsc().stream().map(this::toPlace).toList());
     }
 
     public CrawlCandidate createCrawlCandidate(CrawlCandidateRequest request) {
@@ -279,7 +277,7 @@ public class PlaceService {
         candidate.setPhone(request.phone());
         candidate.setMapLink(request.mapLink());
         candidate.setCollectedAt(now());
-        markDuplicateOrPending(candidate);
+        markDuplicateOrPending(candidate, duplicateCandidates());
         return toCrawlCandidate(crawlCandidateRepository.save(candidate));
     }
 
@@ -310,7 +308,6 @@ public class PlaceService {
         }
 
         candidate.setStatus(APPROVED);
-        crawlCandidateRepository.save(candidate);
 
         return createPlace(new PlaceRequest(
                 candidate.getSourceId(),
@@ -335,59 +332,32 @@ public class PlaceService {
         CrawlCandidateEntity candidate = findCrawlCandidateEntity(candidateId);
         candidate.setStatus(REJECTED);
         candidate.setDuplicateReason(request.reason());
-        return toCrawlCandidate(crawlCandidateRepository.save(candidate));
+        return toCrawlCandidate(candidate);
     }
 
     @Transactional(readOnly = true)
     public KakaoLocalClient.KakaoPlaceSearchResponse searchKakaoPlaces(KakaoSearchRequest request) {
-        return kakaoLocalClient.searchKeyword(kakaoRequest(
-                request.query(),
-                valueOrDefault(request.categoryGroupCode(), "FD6"),
-                request.longitude(),
-                request.latitude(),
-                request.radius(),
-                request.rect(),
-                request.page(),
-                request.size(),
-                request.sort()
+        return kakaoLocalClient.searchKeyword(new KakaoLocalClient.KakaoPlaceSearchRequest(
+                request.query(), valueOrDefault(request.categoryGroupCode(), "FD6"),
+                request.longitude(), request.latitude(), request.radius(), request.rect(),
+                request.page(), request.size(), request.sort()
         ));
     }
 
     public List<CrawlCandidate> collectKakaoPlaces(KakaoCollectRequest request) {
-        KakaoLocalClient.KakaoPlaceSearchResponse response = kakaoLocalClient.searchKeyword(kakaoRequest(
-                request.query(),
-                valueOrDefault(request.categoryGroupCode(), "FD6"),
-                request.longitude(),
-                request.latitude(),
-                request.radius(),
-                request.rect(),
-                request.page(),
-                request.size(),
-                request.sort()
+        KakaoLocalClient.KakaoPlaceSearchResponse response = kakaoLocalClient.searchKeyword(new KakaoLocalClient.KakaoPlaceSearchRequest(
+                request.query(), valueOrDefault(request.categoryGroupCode(), "FD6"),
+                request.longitude(), request.latitude(), request.radius(), request.rect(),
+                request.page(), request.size(), request.sort()
         ));
 
+        List<PlaceEntity> places = duplicateCandidates();
         return Optional.ofNullable(response.documents()).orElse(List.of()).stream()
-                .map(document -> saveKakaoCandidate(request.query(), document))
+                .map(document -> saveKakaoCandidate(request.query(), document, places))
                 .toList();
     }
 
-    private KakaoLocalClient.KakaoPlaceSearchRequest kakaoRequest(
-            String query,
-            String categoryGroupCode,
-            double longitude,
-            double latitude,
-            int radius,
-            String rect,
-            int page,
-            int size,
-            String sort
-    ) {
-        return new KakaoLocalClient.KakaoPlaceSearchRequest(
-                query, categoryGroupCode, longitude, latitude, radius, rect, page, size, sort
-        );
-    }
-
-    private CrawlCandidate saveKakaoCandidate(String keyword, KakaoLocalClient.KakaoPlaceDocument document) {
+    private CrawlCandidate saveKakaoCandidate(String keyword, KakaoLocalClient.KakaoPlaceDocument document, List<PlaceEntity> places) {
         Optional<CrawlCandidateEntity> existing = crawlCandidateRepository.findBySourceAndSourceId("KAKAO", document.id());
         if (existing.isPresent()) {
             return toCrawlCandidate(existing.get());
@@ -408,7 +378,7 @@ public class PlaceService {
         candidate.setLatitude(toDouble(document.y()));
         candidate.setDistanceMeters(toInt(document.distance()));
         candidate.setCollectedAt(now());
-        markDuplicateOrPending(candidate);
+        markDuplicateOrPending(candidate, places);
         return toCrawlCandidate(crawlCandidateRepository.save(candidate));
     }
 
@@ -432,8 +402,9 @@ public class PlaceService {
         return candidate;
     }
 
-    private void markDuplicateOrPending(CrawlCandidateEntity candidate) {
+    private void markDuplicateOrPending(CrawlCandidateEntity candidate, List<PlaceEntity> places) {
         Optional<String> duplicateReason = findDuplicateReason(
+                places,
                 candidate.getSourceId(),
                 candidate.getName(),
                 valueOrDefault(candidate.getRoadAddress(), candidate.getAddress()),
@@ -446,17 +417,23 @@ public class PlaceService {
         candidate.setDuplicateReason(duplicateReason.orElse(null));
     }
 
-    private Optional<String> findDuplicateReason(String kakaoPlaceId, String name, String address, String phone, double latitude, double longitude, Long exceptPlaceId) {
+    /** 중복 검사 대상(비활성 제외). 여러 건을 검사할 땐 한 번만 불러서 재사용한다. */
+    List<PlaceEntity> duplicateCandidates() {
         return placeRepository.findAll().stream()
-                .filter(place -> exceptPlaceId == null || !exceptPlaceId.equals(place.getId()))
                 .filter(place -> !INACTIVE.equals(place.getStatus()))
+                .toList();
+    }
+
+    private Optional<String> findDuplicateReason(List<PlaceEntity> places, String kakaoPlaceId, String name, String address, String phone, double latitude, double longitude, Long exceptPlaceId) {
+        return places.stream()
+                .filter(place -> exceptPlaceId == null || !exceptPlaceId.equals(place.getId()))
                 .map(place -> duplicateReason(place, kakaoPlaceId, name, address, phone, latitude, longitude))
                 .flatMap(Optional::stream)
                 .findFirst();
     }
 
-    boolean isDuplicate(String name, String address, String phone, double latitude, double longitude) {
-        return findDuplicateReason(null, name, address, phone, latitude, longitude, null).isPresent();
+    boolean isDuplicate(List<PlaceEntity> places, String name, String address, String phone, double latitude, double longitude) {
+        return findDuplicateReason(places, null, name, address, phone, latitude, longitude, null).isPresent();
     }
 
     private Optional<String> duplicateReason(PlaceEntity place, String kakaoPlaceId, String name, String address, String phone, double latitude, double longitude) {
@@ -506,7 +483,6 @@ public class PlaceService {
         place.setRating(Math.round(rating * 10) / 10.0);
         place.setReviewCount(activeReviews.size());
         place.setUpdatedAt(now());
-        placeRepository.save(place);
     }
 
     private PlaceEntity findActivePlace(long placeId) {
